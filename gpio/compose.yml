@@ -1,0 +1,100 @@
+# ==========================================
+# compose.yml
+#
+# | 項目 | 内容 | 備考 |
+# | --- | --- | --- |
+# | name | プロジェクト名 | 全て小文字 |
+# | services | 作成したいサービスを列挙 | YAMLはスペース2つ |
+# | linux / db | 作成するサービスの名前 | docker composeで管理する際に必要 |
+#
+# ==========================================
+
+# name: project1
+
+services:
+  linux:
+    # ==========================================
+    # linuxサービスの設定項目
+    #
+    # | 項目 | 内容 | 備考 |
+    # | --- | --- | --- |
+    # | container_name | コンテナ名 | 外部から見た時の名前 |
+    # | hostname | ホスト名 | - |
+    # | build | Dockerfileの設定 | - |
+    # | image | 使用するコンテナイメージ | Dockerfileが無い場合指定 |
+    # | volumes | マウントするフォルダ/デバイス設定 | ホスト側: コンテナ内 |
+    # | devices | GPIO等のデバイスファイルの受け渡し | ホスト側デバイス:コンテナ内デバイス |
+    # | device_cgroup_rules | USBデバイスクラス等への読み書き許可 | privileged を使わずに抜き差しへ追従するための設定 |
+    # | privileged | 全てのデバイスにアクセス可能な特権モード | 通常はコメントアウトのまま。切り分け用の最終手段として残している |
+    # | restart | コンテナの起動設定 | no unless-stopped always ... |
+    # | environment | コンテナ内の環境変数を設定 | Python の `os.environ.get` 等でも取得可能 |
+    # | ports | 外部からアクセス可能なポートを設定 | ホストマシンのポート番号:コンテナのポート番号 |
+    # | depends_on | サービス間の依存関係を定義 | - |
+    # | command | サービスが起動したときに実行するコマンド | - |
+    #
+    # IPアドレスの確認 : docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" [${container_name}の値]
+    #
+    # ==========================================
+    env_file: .env
+
+    container_name: ${CONTAINER_NAME}
+
+    hostname: ${CONTAINER_NAME}
+
+    build:
+      # ==========================================
+      # Dockerfileの設定項目
+      #
+      # | 項目 | 内容 |
+      # | --- | --- |
+      # | context/dockerfile | Dockerfileへの相対パス |
+      # | args | Dockerfile内の環境変数を設定 |
+      #
+      # ==========================================
+
+      context: ${Dockerfile_DIR}
+      dockerfile: ${Dockerfile}
+      args:
+        WS:           ${WS}
+        USER_NAME:    ${USER_NAME}
+        PASSWORD:     ${PASSWORD}
+        ENTRY_DIR:    ${ENTRY_DIR}
+        ENTRY_POINT:  ${ENTRY_POINT}
+        LANG:         ${LANG}
+
+    # image: ubuntu:25.10
+    
+    devices:
+      - ${GPIOCHIP}:${GPIOCHIP}
+      - ${GPIOMEM}:${GPIOMEM}
+    
+    device_cgroup_rules:
+      - 'c 254:* rmw'
+
+    # privileged: true
+
+    volumes:
+      - ${VOLUME}:/home/${USER_NAME}/${WS}
+
+    restart: no
+
+    environment:
+      - TZ=${TIME_ZONE}
+      - LANG=${LANG}
+
+    ports:
+      - "${PORT}:3000"
+
+    # depends_on:
+      # ==========================================
+      # サービス間 依存関係の設定項目
+      #
+      # | 項目 | 内容 | 備考 |
+      # | --- | --- | --- |
+      # | db | 依存サービス名 | dbサービス参照 |
+      #
+      # ==========================================
+      # - db                                # 先にdbサービスが動いていることを確認する
+
+    command:
+      - /home/${USER_NAME}/${ENTRY_DIR}/${ENTRY_POINT}
