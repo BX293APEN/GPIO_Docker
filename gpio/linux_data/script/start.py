@@ -18,7 +18,7 @@ import gpiozero
 from time import sleep
 
 if __name__ == "__main__":
-    led_pin = gpiozero.DigitalOutputDevice(pin=18)
+    led_pin = gpiozero.DigitalOutputDevice(pin=23)
     led_pin.value = 0
     while True:
         led_pin.value = 1 - led_pin.value
