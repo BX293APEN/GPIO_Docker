@@ -82,8 +82,8 @@ services:
       - TZ=${TIME_ZONE}
       - LANG=${LANG}
 
-    ports:
-      - "${PORT}:3000"
+    # ports:
+    #   - "${OPENPORT}:${USEPORT}"
 
     # depends_on:
       # ==========================================
